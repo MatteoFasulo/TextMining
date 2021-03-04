@@ -2,6 +2,6 @@
 TextMining
 
 
-
+Asghere
 
 x2
