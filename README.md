@@ -2,7 +2,6 @@
 TextMining
 
 
-Pazzo sgravato
 
 
 x2
