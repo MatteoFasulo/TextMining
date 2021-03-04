@@ -20,6 +20,7 @@ nespresso <- read.csv(file = "20181110-inissia28_10.csv",sep = ";",stringsAsFact
 names(nespresso)
 class(nespresso)
 xness <- nespresso$Review.Text
+xness <- tolower(xness)
 modelness <- word2vec(xness, "skip-gram",dim = 10, iter = 30)
 matness <- as.matrix(modelness)
 vetaroma <- predict(modelness,"aroma",type = "embedding")
