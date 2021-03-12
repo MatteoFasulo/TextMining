@@ -1,4 +1,5 @@
 library(rvest)
+library(stringr)
 --------------------------------------------------------------------------------
 product_info <- function(url)
 {
@@ -95,7 +96,7 @@ cycle_scraper <- function(product_id, to_page)
   return(reviews_all)
 }
 
-recensioni <- cycle_scraper(product_id = "B086B5K94Y", to_page = 20)
+recensioni <- cycle_scraper(product_id = "B00IBDVTSU", to_page = 10)
 
 
 
