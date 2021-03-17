@@ -56,7 +56,13 @@ one_page_scraper <- function(url, page = 1, throttle = 0)
     str_trim()
   
   # Combine fields into data frame
-  df <- data.frame(title, author, state, date, stars, comments, stringsAsFactors = F)
+  df <- data.frame(
+    title, 
+    author, 
+    state, 
+    date, 
+    stars, 
+    comments, stringsAsFactors = F)
   return(df)
 }
 
@@ -76,4 +82,6 @@ cycle_scraper <- function(product_id, from_page = 1, to_page)
   return(reviews_all)
 }
 
-recensioni <- cycle_scraper(product_id = "B07PHPXHQS",from_page = 100, to_page = 125)
+recensioni <- cycle_scraper(product_id = "B07PHPXHQS",from_page = 50, to_page = 60)
+
+################################################################################
