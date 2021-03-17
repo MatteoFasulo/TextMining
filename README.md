@@ -1,7 +1,2 @@
 # TextMining
-TextMining
-
-
-Asghere
-
-x2
+LAST EDIT 2021 03 17
