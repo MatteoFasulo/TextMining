@@ -60,16 +60,20 @@ one_page_scraper <- function(url, page = 1, throttle = 0)
   return(df)
 }
 
-cycle_scraper <- function(product_id, to_page)
+cycle_scraper <- function(product_id, from_page = 1, to_page)
 {
   # Get N (to_page) dozens of reviews from URL
+  increment_page <- 1
   reviews_all <- NULL
-  for(page_num in 1:to_page){
+  page_range <- from_page:to_page
+  for(page_num in from_page:to_page){
     url <- paste("https://www.amazon.it/product-reviews/",as.character(product_id),"/?pageNumber=",as.character(page_num),sep = "")
     reviews <- one_page_scraper(url, throttle = 5)
     reviews_all <- rbind(reviews_all, cbind(reviews))
+    message("Getting page ",increment_page, " of ",length(page_range), "; Actual: page ",page_num)
+    increment_page <- increment_page + 1
   }
   return(reviews_all)
 }
 
-recensioni <- cycle_scraper(product_id = "B06XSC4H28", to_page = 35)
+recensioni <- cycle_scraper(product_id = "B07PHPXHQS",from_page = 100, to_page = 125)
