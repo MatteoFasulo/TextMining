@@ -2,10 +2,14 @@
 install.packages("word2vec")
 install.packages("udpipe")
 install.packages("philentropy")
+install.packages("stopwords")
+install.packages("syuzhet")
 ############## LOAD ##############
 library(word2vec)
 library(udpipe)
 library(philentropy)
+library(stopwords)
+library(syuzhet)
 ############## APPROACH ##############
 data("brussels_reviews", package = "udpipe")
 x <- subset(brussels_reviews, language="es") #Not working actually
@@ -29,4 +33,14 @@ aromagusto <- rbind(vetaroma, vetgusto)
 distance(aromagusto, method = "euclidean")
 near_aroma <- predict(modelness,"aroma",type = "nearest")
 near_gusto <- predict(modelness,"gusto",type = "nearest")
-########################################################
+#########################CLEAN DATA#############################################
+nespresso$Colour <- gsub("Stile: InissiaColore: ", "", nespresso$Colour)
+nespresso$Colour <- gsub(" Utile Segnala un abuso", "", nespresso$Colour)
+nespresso$Colour <- gsub("Stile: Inissia & AeroccinoColore: ", "", nespresso$Colour)
+unique(nespresso$Colour)
+nespresso$Colour <- gsub("Formato: Cucina", "NA", nespresso$Colour)
+unique(nespresso$Colour)
+table(nespresso$Colour)
+barplot(prop.table(table(nespresso$Colour)))
+colori <- as.matrix(table(nespresso$Colour))
+get_sentences(nespresso$Review.Text)
