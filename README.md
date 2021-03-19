@@ -1,7 +1,2 @@
 # TextMining
-TextMining
-
-
-Asghere
-
-x2
+TextMining Course
