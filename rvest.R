@@ -1,6 +1,6 @@
 library(rvest)
 library(stringr)
---------------------------------------------------------------------------------
+################################################################################
 
 one_page_scraper <- function(url, page = 1, throttle = 0)
 {
@@ -82,6 +82,54 @@ cycle_scraper <- function(product_id, from_page = 1, to_page)
   return(reviews_all)
 }
 
-recensioni <- cycle_scraper(product_id = "B07PHPXHQS",from_page = 50, to_page = 60)
+recensioni <- cycle_scraper(product_id = "B07PHPXHQS",from_page = 1, to_page = 10)
 
-################################################################################
+##################################ANALIZE#######################################
+library(word2vec)
+library(udpipe)
+library(philentropy)
+library(stopwords)
+library(syuzhet)
+library(tm)
+library(textclean)
+
+preprocessing <- function(df){
+  recensioni_frasi <- get_sentences(df$comments)
+  recensioni_corpus <- VCorpus(VectorSource(recensioni_frasi))
+  recensioni_processed <- tm_map(recensioni_corpus, removeNumbers)
+  recensioni_processed <- tm_map(recensioni_processed, removePunctuation)
+  ndf <- data.frame(text=unlist(sapply(recensioni_processed,'[',"content")))
+  ndf$text <- tolower(ndf$text)
+  ndf$text <- str_trim(ndf$text)
+  ndf_frasi <- get_sentences(ndf$text)
+  ndf_corpus <- VCorpus(VectorSource(ndf_frasi))
+  ndf_processed <- tm_map(ndf_corpus, removeWords, stopwords("italian"))
+  ndf_final <- tm_map(ndf_processed, stripWhitespace)
+  complete_df <- data.frame(text=unlist(sapply(ndf_final,'[',"content"))) #RICONVERTIRE A DATA FRAME
+  complete_df$text <- tolower(complete_df$text)
+  complete_df$text <- str_trim(complete_df$text)
+  return(complete_df)
+}
+recensioni_processed <- preprocessing(recensioni)
+
+word_analytics <- function(df){
+  parole <-strsplit(df$text, " ",fixed = TRUE)
+  par <- unlist(parole)
+  conti <- table(par)
+  conti <- sort(conti, decreasing =TRUE)
+  return(conti)
+}
+freq_word <- word_analytics(recensioni_processed)
+
+par(las=2)
+barplot(freq_word[1:20], main = "Frequenza parole", xlab = "Parole")
+
+####################################WORDCLOUD###################################
+library(wordcloud)
+
+plot_cloud <- function(df){
+  list_phares <- get_sentences(df$text)
+  word_corpus <- VCorpus(VectorSource(list_phares))
+  return(wordcloud(word_corpus, max.words = 200, min.freq = 1, random.order=FALSE, rot.per=0.35, colors=brewer.pal(8, "Dark2")))
+}
+plot_cloud(recensioni_processed)
