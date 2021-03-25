@@ -1,5 +1,5 @@
 ################################################################################
-install.packages("rvest","stringr","word2vec","udpipe","philentropy","stopwords","syuzhet","tm","textclean","wordcloud")
+install.packages(c("rvest","stringr","word2vec","udpipe","philentropy","stopwords","syuzhet","tm","textclean","wordcloud"))
 ################################################################################
 library(rvest)
 library(stringr)
