@@ -107,3 +107,55 @@ conti[10]
 mean(conti) #ogni parola appare x volte
 conti <- sort(conti, decreasing =TRUE) #ordinate in decrescente e 1246
 conti[1:10] #10 parole più frequenti
+
+y <- c(10,11,9.5,8.7)
+barplot(y, main = "Andamento vendite", xlab = "Vendite stagionali")
+barplot(conti[1:20], main = "Frequenza parole", xlab = "Parole")
+
+########################BAG OF WORDS############################################
+install.packages(c("syuzhet","RSentiment","sentimentr","SentimentAnalysis"), dependencies=TRUE)
+library(syuzhet)
+library(RSentiment)
+library(sentimentr)
+library(SentimentAnalysis)
+
+################################################################################
+ccc <- c("pog", ".champ", "u", "r25" ,"so. good" ," ", "a b")
+ccc
+grep("u", ccc)
+grep("o|g",ccc)
+grep("\\.",ccc) #metacarattere
+grep("\\d",ccc)
+grep("\\D",ccc)
+grep("\\d\\d",ccc) #cerco 2 cifre una vicino all'altra
+grep("\\d\\d\\d",ccc)
+grep("amp",ccc)
+grep("\\s",ccc) #spaces
+grep("\\w\\w\\w",ccc) #3 caratteri vicini
+grep("\\w\\s\\w",ccc) #carattere spazio carattere -> 7
+grep("\\b\\w",ccc) #casi in cui abbiamo un carattere all'inizio
+grep("\\bp",ccc) #dove inizia con p
+grep("\\bg",ccc) #good
+grep("[aeiou]",ccc)
+grep("[au]",ccc)
+grep("[5s]",ccc)
+grep("[^pog]",ccc) #tutto ciò che non contiene pog
+z1 <- grep("[oa]",ccc)
+setdiff((1:6),z1) #negato di z1
+grep("o+",ccc)
+grep("o?",ccc)
+grep("(oo)+",ccc)
+grep("(oo){1}",ccc) #compaia due oo di seguito
+grep("(o){2}",ccc) #compaia o 2 volte di seguito
+
+x <- read.csv("20210319-tweets_italy-travel-5-labeled.csv",sep = ",",stringsAsFactors = FALSE, fileEncoding = "UTF-8")
+words <- strsplit(x$testo, " ", fixed = TRUE)
+words <- unlist(words)
+words <- unique(words)
+grep("\\b#", words)
+grep("\\bhttp", words)
+short_words <- nchar(words)<3
+long_words <- nchar(words)>15
+words[short_words]
+words[long_words]
+grep("https://([a-zA-Z0-9])*", words)
