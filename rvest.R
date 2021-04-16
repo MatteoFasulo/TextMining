@@ -28,23 +28,14 @@ one_page_scraper <- function(url, page = 1, throttle = 0)
   
   state <- doc %>%
     html_nodes("#cm_cr-review_list .review-date") %>%
-    html_text() %>% 
-    gsub(".*on ", "", .) %>%
-    str_remove_all(pattern = "Recensito ") %>%
-    str_remove_all(pattern = "in ") %>%
-    str_remove_all(pattern = " il ") %>%
-    str_remove_all(pattern = "nel ") %>%
-    str_remove_all(pattern = "negli ") %>%
-    str_remove_all(pattern = "[:digit:]") %>%
-    str_trim() 
-    state <- word(state, 1, -2)
+    html_text() %>%
+    gsub(".*the ","", .) %>%
+    gsub("on.*","", .)
   
   date <- doc %>%
     html_nodes("#cm_cr-review_list .review-date") %>%
     html_text() %>% 
-    gsub(".*on ", "", .) 
-    date <- word(date,5,-1) %>% 
-    str_remove_all(pattern = "il ")
+    gsub(".*on ", "", .)
   
   stars <- doc %>%
     html_nodes("#cm_cr-review_list  .review-rating") %>%
@@ -76,7 +67,7 @@ cycle_scraper <- function(product_id, from_page = 1, to_page)
   reviews_all <- NULL
   page_range <- from_page:to_page
   for(page_num in from_page:to_page){
-    url <- paste("https://www.amazon.it/product-reviews/",as.character(product_id),"/?pageNumber=",as.character(page_num),sep = "")
+    url <- paste("https://www.amazon.com/product-reviews/",as.character(product_id),"/?pageNumber=",as.character(page_num),sep = "")
     reviews <- one_page_scraper(url, throttle = 5)
     reviews_all <- rbind(reviews_all, cbind(reviews))
     message("Getting page ",increment_page, " of ",length(page_range), "; Actual: page ",page_num)
@@ -85,7 +76,7 @@ cycle_scraper <- function(product_id, from_page = 1, to_page)
   return(reviews_all)
 }
 
-recensioni <- cycle_scraper(product_id = "B07PHPXHQS",from_page = 1, to_page = 10)
+recensioni <- cycle_scraper(product_id = "B084J4MZK8",from_page = 1, to_page = 3)
 
 ##################################ANALIZE#######################################
 library(word2vec)
@@ -106,7 +97,8 @@ preprocessing <- function(df){
   ndf$text <- str_trim(ndf$text)
   ndf_frasi <- get_sentences(ndf$text)
   ndf_corpus <- VCorpus(VectorSource(ndf_frasi))
-  ndf_processed <- tm_map(ndf_corpus, removeWords, stopwords("italian"))
+  ndf_processed <- tm_map(ndf_corpus, removeWords, stopwords("english"))
+  ndf_processed <- tm_map(ndf_processed, stemDocument)
   ndf_final <- tm_map(ndf_processed, stripWhitespace)
   complete_df <- data.frame(text=unlist(sapply(ndf_final,'[',"content"))) #RICONVERTIRE A DATA FRAME
   complete_df$text <- tolower(complete_df$text)
@@ -131,8 +123,36 @@ barplot(freq_word[1:20], main = "Frequenza parole", xlab = "Parole")
 library(wordcloud)
 
 plot_cloud <- function(df){
-  list_phares <- get_sentences(df$text)
-  word_corpus <- VCorpus(VectorSource(list_phares))
+  list_phrases <- get_sentences(df$text)
+  word_corpus <- VCorpus(VectorSource(list_phrases))
   return(wordcloud(word_corpus, max.words = 200, min.freq = 1, random.order=FALSE, rot.per=0.35, colors=brewer.pal(8, "Dark2")))
 }
 plot_cloud(recensioni_processed)
+
+################################################################################
+library(syuzhet)
+sentences <- get_sentences(recensioni$comments)
+syuzhet <- as.data.frame(get_sentiment(sentences, method = "syuzhet", language = "english"))
+bing <- as.data.frame(get_sentiment(sentences, method = "bing", language = "english"))
+afinn <- as.data.frame(get_sentiment(sentences, method = "afinn", language = "english"))
+sentences[122] #min Bing
+sentences[246] #min AFINN & Syuzhet
+plot(density(x = syuzhet[,1], kernel= "gaussian"))
+
+library(RSentiment)
+calculate_score(sentences)
+categorie <- as.matrix(calculate_sentiment(sentences))
+options(java.parameters = c("-XX:+UseConcMarkSweepGC", "-Xmx8192m"))
+categorie <- as.matrix(calculate_total_presence_sentiment(sentences))
+barplot(sort(as.integer(categorie[2,]),decreasing = TRUE))
+
+library(sentimentr)
+sentences <- get_sentences(recensioni$comments)
+replace_emoji(sentences)
+pippo <- sentiment(sentences)
+gruppi <- sentiment_by(sentences)
+highlight(gruppi)
+plot(gruppi)
+
+library(SentimentAnalysis)
+analyzeSentiment(x = recensioni$comments)
