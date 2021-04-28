@@ -153,7 +153,10 @@ bing <- as.data.frame(get_sentiment(sentences, method = "bing", language = "engl
 afinn <- as.data.frame(get_sentiment(sentences, method = "afinn", language = "english"))
 sentences[122] #min Bing
 sentences[246] #min AFINN & Syuzhet
+par(mfrow=c(2,2))
 plot(density(x = syuzhet[,1], kernel= "gaussian"))
+plot(density(x = bing[,1], kernel= "gaussian"))
+plot(density(x = afinn[,1], kernel= "gaussian"))
 
 library(RSentiment)
 calculate_score(sentences)
