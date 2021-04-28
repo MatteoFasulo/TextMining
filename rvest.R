@@ -1,5 +1,5 @@
 ################################################################################
-install.packages(c("rvest","stringr","word2vec","udpipe","philentropy","stopwords","syuzhet","tm","textclean","wordcloud"))
+install.packages(c("rvest","stringr","word2vec","udpipe","philentropy","stopwords","syuzhet","tm","textclean","wordcloud","SnowballC"))
 ################################################################################
 library(rvest)
 library(stringr)
@@ -76,7 +76,7 @@ cycle_scraper <- function(product_id, from_page = 1, to_page)
   return(reviews_all)
 }
 
-recensioni <- cycle_scraper(product_id = "B084J4MZK8",from_page = 1, to_page = 3)
+recensioni <- cycle_scraper(product_id = "B084J4MZK8",from_page = 1, to_page = 10)
 
 ##################################ANALIZE#######################################
 library(word2vec)
@@ -86,6 +86,7 @@ library(stopwords)
 library(syuzhet)
 library(tm)
 library(textclean)
+library(ggplot2)
 
 preprocessing <- function(df){
   recensioni_frasi <- get_sentences(df$comments)
@@ -115,10 +116,25 @@ word_analytics <- function(df){
   return(conti)
 }
 freq_word <- word_analytics(recensioni_processed)
+parole <- as.data.frame(freq_word[1:20])
 
 par(las=2)
 barplot(freq_word[1:20], main = "Frequenza parole", xlab = "Parole")
+ggplot(data = parole, aes(x=par, y=Freq)) + geom_bar(stat = "identity")
 
+stars_count <- function(df){
+  count <- tapply(recensioni$comments, recensioni$stars, length)
+  return(count)
+}
+stars <- stars_count(recensioni)
+
+par(las=1)
+barplot(stars)
+pie(stars)
+ggplot(data = as.data.frame(stars), aes(x=row.names(as.data.frame(stars)), y=stars)) + geom_bar(stat = "identity")
+ggplot(data = as.data.frame(stars), aes(x="", y=stars, fill=LETTERS[1:5])) + 
+              geom_bar(stat="identity", width=1, color="white") + 
+              coord_polar("y", start=0)
 ####################################WORDCLOUD###################################
 library(wordcloud)
 
