@@ -116,12 +116,10 @@ word_analytics <- function(df){
   par <- unlist(parole)
   conti <- table(par)
   conti <- sort(conti, decreasing =TRUE)
-  return(conti)
+  words <- as.data.frame(conti[1:20])
+  return(words)
 }
-freq_word <- word_analytics(recensioni_processed)
-parole <- as.data.frame(freq_word[1:20])
-
-ggplot(data = parole, aes(x=par, y=Freq)) + 
+ggplot(data = word_analytics(recensioni_processed), aes(x=par, y=Freq)) + 
   geom_bar(stat = "identity") +
   labs(title = "Words", 
        subtitle = "Top 20 for frequency",
@@ -134,11 +132,12 @@ ggplot(data = parole, aes(x=par, y=Freq)) +
 
 stars_count <- function(df){
   count <- tapply(recensioni$comments, recensioni$stars, length)
-  return(count)
+  stars <- as.data.frame(count)
+  return(stars)
 }
 stars <- stars_count(recensioni)
 
-ggplot(data = as.data.frame(stars), aes(x=row.names(as.data.frame(stars)), y=stars)) + 
+ggplot(data = stars, aes(x=row.names(as.data.frame(stars)), y=count)) + 
   geom_bar(stat = "identity") +
   labs(title = "Stars", 
        subtitle = "Bar Plot",
@@ -148,7 +147,7 @@ ggplot(data = as.data.frame(stars), aes(x=row.names(as.data.frame(stars)), y=sta
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5))
 
-ggplot(data = as.data.frame(stars), aes(x="", y=stars, fill=row.names(as.data.frame(stars)))) + 
+ggplot(data = stars, aes(x="", y=count, fill=row.names(stars))) + 
   geom_bar(stat="identity", width=1, color="white") + 
   coord_polar("y", start=0) +
   labs(title = "Stars", 
@@ -219,8 +218,8 @@ barplot(sort(as.integer(categorie[2,]),decreasing = TRUE))
 library(sentimentr)
 sentences <- get_sentences(recensioni$comments)
 replace_emoji(sentences)
-pippo <- sentiment(sentences)
-ggplot(data = pippo, aes(x=pippo$sentiment)) +
+calculated_sentiment <- sentiment(sentences)
+ggplot(data = calculated_sentiment, aes(x=calculated_sentiment$sentiment)) +
   geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
   labs(title = "Sentiment for each sentence", 
        subtitle = "Empirical distribution function",
