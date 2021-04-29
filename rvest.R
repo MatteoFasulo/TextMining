@@ -1,18 +1,14 @@
 ################################################################################
 install.packages(c("rvest","stringr","word2vec","udpipe","philentropy","stopwords","syuzhet","tm","textclean","wordcloud","SnowballC","dplyr","hrbrthemes"))
 ################################################################################
-library(rvest)
-library(stringr)
-library(word2vec)
-library(udpipe)
-library(philentropy)
-library(stopwords)
-library(syuzhet)
-library(tm)
-library(textclean)
-library(ggplot2)
-library(dplyr)
-library(hrbrthemes)
+library(rvest) #
+library(stringr) #
+library(stopwords) #
+library(syuzhet) #
+library(tm) #
+library(ggplot2) #
+library(dplyr) #
+library(hrbrthemes) #
 library(wordcloud)
 ################################################################################
 
@@ -170,10 +166,10 @@ plot_cloud(recensioni_processed)
 
 ################################################################################
 library(syuzhet)
-sentences <- get_sentences(recensioni$comments)
-syuzhet <- as.data.frame(get_sentiment(sentences, method = "syuzhet", language = "english"))
-bing <- as.data.frame(get_sentiment(sentences, method = "bing", language = "english"))
-afinn <- as.data.frame(get_sentiment(sentences, method = "afinn", language = "english"))
+sentences <- syuzhet::get_sentences(recensioni$comments)
+syuzhet <- as.data.frame(syuzhet::get_sentiment(sentences, method = "syuzhet", language = "english"))
+bing <- as.data.frame(syuzhet::get_sentiment(sentences, method = "bing", language = "english"))
+afinn <- as.data.frame(syuzhet::get_sentiment(sentences, method = "afinn", language = "english"))
 sentences[122] #min Bing
 sentences[246] #min AFINN & Syuzhet
 
@@ -216,7 +212,7 @@ categorie <- as.matrix(calculate_total_presence_sentiment(sentences))
 barplot(sort(as.integer(categorie[2,]),decreasing = TRUE))
 
 library(sentimentr)
-sentences <- get_sentences(recensioni$comments)
+sentences <- sentimentr::get_sentences(recensioni$comments)
 replace_emoji(sentences)
 calculated_sentiment <- sentiment(sentences)
 ggplot(data = calculated_sentiment, aes(x=calculated_sentiment$sentiment)) +
