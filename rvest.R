@@ -1,8 +1,19 @@
 ################################################################################
-install.packages(c("rvest","stringr","word2vec","udpipe","philentropy","stopwords","syuzhet","tm","textclean","wordcloud","SnowballC"))
+install.packages(c("rvest","stringr","word2vec","udpipe","philentropy","stopwords","syuzhet","tm","textclean","wordcloud","SnowballC","dplyr","hrbrthemes"))
 ################################################################################
 library(rvest)
 library(stringr)
+library(word2vec)
+library(udpipe)
+library(philentropy)
+library(stopwords)
+library(syuzhet)
+library(tm)
+library(textclean)
+library(ggplot2)
+library(dplyr)
+library(hrbrthemes)
+library(wordcloud)
 ################################################################################
 
 one_page_scraper <- function(url, page = 1, throttle = 0)
@@ -79,14 +90,6 @@ cycle_scraper <- function(product_id, from_page = 1, to_page)
 recensioni <- cycle_scraper(product_id = "B084J4MZK8",from_page = 1, to_page = 10)
 
 ##################################ANALIZE#######################################
-library(word2vec)
-library(udpipe)
-library(philentropy)
-library(stopwords)
-library(syuzhet)
-library(tm)
-library(textclean)
-library(ggplot2)
 
 preprocessing <- function(df){
   recensioni_frasi <- get_sentences(df$comments)
@@ -118,9 +121,16 @@ word_analytics <- function(df){
 freq_word <- word_analytics(recensioni_processed)
 parole <- as.data.frame(freq_word[1:20])
 
-par(las=2)
-barplot(freq_word[1:20], main = "Frequenza parole", xlab = "Parole")
-ggplot(data = parole, aes(x=par, y=Freq)) + geom_bar(stat = "identity")
+ggplot(data = parole, aes(x=par, y=Freq)) + 
+  geom_bar(stat = "identity") +
+  labs(title = "Words", 
+       subtitle = "Top 20 for frequency",
+       x = "Words",
+       y = "Frequence",
+       caption = "(based on previous stemming phase)") +
+  theme(axis.text.x = element_text(angle = 90), 
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
 
 stars_count <- function(df){
   count <- tapply(recensioni$comments, recensioni$stars, length)
@@ -128,15 +138,29 @@ stars_count <- function(df){
 }
 stars <- stars_count(recensioni)
 
-par(las=1)
-barplot(stars)
-pie(stars)
-ggplot(data = as.data.frame(stars), aes(x=row.names(as.data.frame(stars)), y=stars)) + geom_bar(stat = "identity")
-ggplot(data = as.data.frame(stars), aes(x="", y=stars, fill=LETTERS[1:5])) + 
-              geom_bar(stat="identity", width=1, color="white") + 
-              coord_polar("y", start=0)
+ggplot(data = as.data.frame(stars), aes(x=row.names(as.data.frame(stars)), y=stars)) + 
+  geom_bar(stat = "identity") +
+  labs(title = "Stars", 
+       subtitle = "Bar Plot",
+       x = "Stars",
+       y = "Frequence",
+       caption = "(based on entire dataset)") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+
+ggplot(data = as.data.frame(stars), aes(x="", y=stars, fill=row.names(as.data.frame(stars)))) + 
+  geom_bar(stat="identity", width=1, color="white") + 
+  coord_polar("y", start=0) +
+  labs(title = "Stars", 
+       subtitle = "Pie Chart",
+       x = NULL,
+       y = NULL,
+       caption = "(based on entire dataset)") +
+  scale_fill_discrete(name = "Stars") +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
 ####################################WORDCLOUD###################################
-library(wordcloud)
 
 plot_cloud <- function(df){
   list_phrases <- get_sentences(df$text)
@@ -153,12 +177,39 @@ bing <- as.data.frame(get_sentiment(sentences, method = "bing", language = "engl
 afinn <- as.data.frame(get_sentiment(sentences, method = "afinn", language = "english"))
 sentences[122] #min Bing
 sentences[246] #min AFINN & Syuzhet
-par(mfrow=c(2,2))
-plot(density(x = syuzhet[,1], kernel= "gaussian"))
-plot(density(x = bing[,1], kernel= "gaussian"))
-plot(density(x = afinn[,1], kernel= "gaussian"))
 
-library(RSentiment)
+ggplot(data = syuzhet, aes(x=syuzhet[,1])) +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+  labs(title = "Syuzhet's sentiment", 
+       subtitle = "Empirical distribution function",
+       x = "Sentiment",
+       y = "Density",
+       caption = "(based on data from syuzhet lexicon)") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+
+ggplot(data = bing, aes(x=bing[,1])) +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+  labs(title = "Bing's sentiment", 
+       subtitle = "Empirical distribution function",
+       x = "Sentiment",
+       y = "Density",
+       caption = "(based on data from bing lexicon)") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+
+ggplot(data = afinn, aes(x=afinn[,1])) +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+  labs(title = "Afinn's sentiment", 
+       subtitle = "Empirical distribution function",
+       x = "Sentiment",
+       y = "Density",
+       caption = "(based on data from afinn lexicon)") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+
+
+library(RSentiment) #buggy
 calculate_score(sentences)
 categorie <- as.matrix(calculate_sentiment(sentences))
 options(java.parameters = c("-XX:+UseConcMarkSweepGC", "-Xmx8192m"))
@@ -169,9 +220,29 @@ library(sentimentr)
 sentences <- get_sentences(recensioni$comments)
 replace_emoji(sentences)
 pippo <- sentiment(sentences)
+ggplot(data = pippo, aes(x=pippo$sentiment)) +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+  labs(title = "Sentiment for each sentence", 
+       subtitle = "Empirical distribution function",
+       x = "Sentiment",
+       y = "Density",
+       caption = "(based on data from sentimentr library)") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+
 gruppi <- sentiment_by(sentences)
+ggplot(data = gruppi, aes(x=gruppi$ave_sentiment)) +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+  labs(title = "Sentiment for each review", 
+       subtitle = "Empirical distribution function",
+       x = "Sentiment",
+       y = "Density",
+       caption = "(based on data from sentimentr library)") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+
 highlight(gruppi)
-plot(gruppi)
+plot(gruppi) #?
 
 library(SentimentAnalysis)
 analyzeSentiment(x = recensioni$comments)
