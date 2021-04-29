@@ -83,7 +83,7 @@ cycle_scraper <- function(product_id, from_page = 1, to_page)
   return(reviews_all)
 }
 
-recensioni <- cycle_scraper(product_id = "B084J4MZK8",from_page = 1, to_page = 10)
+recensioni <- cycle_scraper(product_id = "B084J4MZK8",from_page = 1, to_page = 100)
 
 ##################################ANALIZE#######################################
 
