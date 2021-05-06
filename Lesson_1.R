@@ -159,3 +159,31 @@ long_words <- nchar(words)>15
 words[short_words]
 words[long_words]
 grep("https://([a-zA-Z0-9])*", words)
+
+################################################################################
+install.packages("textrank")
+library(textrank)
+data("joboffer")
+cat(unique(joboffer$sentence), sep = "\n")
+names(joboffer)
+head(joboffer[, c("sentence_id","lemma","upos")],10)
+kayw <- textrank_keywords(joboffer$lemma, relevant = joboffer$upos%in%c("NOUN","VERB","ADJ"))
+names(kayw)
+subset(kayw$keywords, ngram > 1)
+install.packages("udpipe")
+library(udpipe)
+joboffer$textrank_id <- unique_identifier(joboffer, c("doc_id","paragraph_id","sentence_id"))
+sentences <- unique(joboffer[,c("textrank_id","sentence")])
+terminology <- subset(joboffer,upos%in%c("NOUN","ADJ"))
+terminology <- terminology[,c("textrank_id","lemma")]
+tr <- textrank_sentences(data=sentences, terminology = terminology)
+tr$sentences #id + frase + indice centralità
+tr$sentences_dist #id1 + id2 + peso tra gli estremi nodo1 e nodo2
+tr$pagerank #vettore con valori textrank + 1 value + opzioni
+vv <- sort(tr$pagerank$vector, decreasing = T)
+plot(vv, type = "b",ylab="Page Rank",main = "Textrank") ### alfa 1/r^(alfa) con alfa circa 1 ZIPF
+s <- summary(tr, n=5)
+s
+s <- summary(tr, n=5, keep.sentence.order = T)
+s
+cat(s,sep = "\n") #Riassunto completo per indice di centralità e rispettando ordine nel testo
