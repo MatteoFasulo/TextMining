@@ -1,5 +1,5 @@
 ################################################################################
-install.packages(c("rvest","stringr","word2vec","udpipe","philentropy","stopwords","syuzhet","tm","textclean","wordcloud","SnowballC","dplyr","hrbrthemes"))
+install.packages(c("rvest","stringr","word2vec","udpipe","philentropy","stopwords","syuzhet","tm","textclean","wordcloud","SnowballC","dplyr","hrbrthemes","BTM","textplot","ggraph","concaveman"))
 ################################################################################
 library(rvest) #
 library(stringr) #
@@ -83,7 +83,10 @@ cycle_scraper <- function(product_id, from_page = 1, to_page)
   return(reviews_all)
 }
 
-recensioni <- cycle_scraper(product_id = "B084J4MZK8",from_page = 1, to_page = 100)
+recensioni <- cycle_scraper(product_id = "B084J4MZK8",from_page = 1, to_page = 101)
+recensioni <- recensioni[-c(252,253,369,474,638,675,755,991), ] #remove Spanish
+
+#[252,253,369,474,638,675,755,991]
 
 ##################################ANALIZE#######################################
 
@@ -132,7 +135,6 @@ stars_count <- function(df){
   return(stars)
 }
 stars <- stars_count(recensioni)
-
 ggplot(data = stars, aes(x=row.names(as.data.frame(stars)), y=count)) + 
   geom_bar(stat = "identity") +
   labs(title = "Stars", 
@@ -241,3 +243,55 @@ plot(gruppi) #?
 
 library(SentimentAnalysis)
 analyzeSentiment(x = recensioni$comments)
+
+################################################################################
+
+gruppi <- cbind(gruppi, recensioni$stars)
+names(gruppi)[names(gruppi) == "V2"] <- "stars"
+
+boxplot(gruppi$ave_sentiment ~ gruppi$stars)
+
+install.packages("wesanderson")
+library(wesanderson)
+
+
+ggplot(data = gruppi, aes(x=factor(stars), y=gruppi$ave_sentiment, fill=as.factor(stars))) +
+  geom_boxplot(alpha=0.5) +
+  scale_fill_brewer(name = "Stars", palette="Dark2") +
+  labs(title = "Average Sentiment for each star", 
+       subtitle = "Box Plot",
+       x = "Stars",
+       y = "Average Sentiment",
+       caption = "(based on data from sentimentr library)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+
+################################################################################
+
+library(udpipe)
+library(word2vec)
+library(philentropy)
+model <- word2vec(x = recensioni$comments, type = "skip-gram",dim = 10, iter = 30)
+vet_parola <- predict(model,"echo",type = "embedding")
+vet_parola2 <- predict(model,"dot",type = "embedding")
+parolas <- rbind(vet_parola, vet_parola2)
+distance(parolas, method = "euclidean")
+
+vet_parola <- predict(model,"echo",type = "nearest")
+vet_parola
+
+BTM_model <- function(df, topic_number = 5, epoch = 15, verbose = FALSE){
+  library(BTM)
+  library(udpipe)
+  test <- recensioni_processed
+  test$doc_id <- c(1:nrow(test))
+  dfcorpus <- strsplit.data.frame(test, term = "text", group = "doc_id", split = " ")
+  model <- BTM(data = dfcorpus, k = as.integer(topic_number), iter = as.integer(epoch), trace = verbose)
+  return(model)
+}
+model <- BTM_model(recensioni_processed, verbose = TRUE)
+library(textplot)
+library(ggraph)
+library(concaveman)
+plot(model)
