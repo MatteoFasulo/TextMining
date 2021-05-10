@@ -163,6 +163,7 @@ grep("https://([a-zA-Z0-9])*", words)
 ################################################################################
 install.packages("textrank")
 library(textrank)
+
 data("joboffer")
 cat(unique(joboffer$sentence), sep = "\n")
 names(joboffer)
@@ -170,8 +171,10 @@ head(joboffer[, c("sentence_id","lemma","upos")],10)
 kayw <- textrank_keywords(joboffer$lemma, relevant = joboffer$upos%in%c("NOUN","VERB","ADJ"))
 names(kayw)
 subset(kayw$keywords, ngram > 1)
+
 install.packages("udpipe")
 library(udpipe)
+
 joboffer$textrank_id <- unique_identifier(joboffer, c("doc_id","paragraph_id","sentence_id"))
 sentences <- unique(joboffer[,c("textrank_id","sentence")])
 terminology <- subset(joboffer,upos%in%c("NOUN","ADJ"))
@@ -187,3 +190,26 @@ s
 s <- summary(tr, n=5, keep.sentence.order = T)
 s
 cat(s,sep = "\n") #Riassunto completo per indice di centralità e rispettando ordine nel testo
+################################################################################
+install.packages("stringr")
+library(stringr)
+install.packages("tm")
+library(tm)
+install.packages("NLP")
+library(NLP)
+install.packages("openNLP")
+library(openNLP)
+
+sstringa <- as.String(s)
+substr(s, 3, 5)
+sstringa[3,5]
+sentAnnotator <- Maxent_Sent_Token_Annotator(language = "en", probs = TRUE, model = NULL)
+anns <- annotate(s, sentAnnotator)
+anns
+wann <- Maxent_Word_Token_Annotator(language = "en", probs = TRUE, model = NULL)
+annw <- annotate(s, wann, anns)
+annw
+v <- sstringa[annw]
+annotatore <- Maxent_POS_Tag_Annotator(language = "en", probs = TRUE, model = NULL)
+ptags <- annotate(s, annotatore, annw)
+ptags
