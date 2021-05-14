@@ -213,3 +213,62 @@ v <- sstringa[annw]
 annotatore <- Maxent_POS_Tag_Annotator(language = "en", probs = TRUE, model = NULL)
 ptags <- annotate(s, annotatore, annw)
 ptags
+
+################################################################################
+dl <- udpipe_download_model(language = "english")
+model <- udpipe_load_model(file = dl$file_model)
+txt <- c(recensioni$comments)
+x <- udpipe_annotate(model, x = txt)
+x <- as.data.frame(x)
+str(x)
+table(x$upos)
+x$textrank_id <- unique_identifier(x, c("doc_id","paragraph_id","sentence_id"))
+sentences <- unique(x[,c("textrank_id","sentence")])
+terminology <- subset(x,upos%in%c("NOUN","ADJ"))
+terminology <- terminology[,c("textrank_id","lemma")]
+tr <- textrank_sentences(data=sentences, terminology = terminology)
+vv <- sort(tr$pagerank$vector, decreasing = T)
+plot(vv, type = "b",ylab="Page Rank",main = "Textrank")
+################################################################################
+library(ctv)
+pkgs <- available.views()
+names(pkgs) <- sapply(pkgs, FUN = function(x) x$name)
+pkgs <- c(pkgs$NaturalLanguageProcessing$packagelist$name, pkgs$MachineLearning$packagelist$name)
+library(tools)
+x <- CRAN_package_db()
+x <- x[,c("Package","Title","Description")]
+x$doc_id <- x$Package
+x$text <- tolower(paste(x$Title,x$Description,sep="\n"))
+x$text <- gsub("'","",x$text)
+x$text <- gsub("<.+>","",x$text)
+x <- subset(x, Package %in% pkgs)
+install.packages("data.table")
+install.packages("stopwords")
+library(stopwords)
+library(data.table)
+library(udpipe)
+anno <- udpipe(x, "english", trace=10)
+biterms <- as.data.table(anno)
+biterms <- biterms[, cooccurrence(x=lemma,relevant=upos %in% c("NOUN","ADJ","VERB") & nchar(lemma)>2 &!lemma %in% stopwords("en"),skipgram=3), by = list(doc_id)]
+library(BTM)
+set.seed(123456)
+traindata <- subset(anno, upos %in% c("NOUN","ADJ","VERB") &!lemma %in% stopwords("en") & nchar(lemma)>2)
+traindata <- traindata[, c("doc_id","lemma")]
+model <- BTM(traindata, biterms = biterms, k=9, iter=2000, background = TRUE, trace = 100)
+install.packages("textplot")
+library(textplot)
+library(concaveman)
+library(ggraph)
+plot(model, top_n = 10, title = "BTM model", subtitle="R packages for NLP/ML", labels=c("Garbage",
+                                                                                        "Neural Nets/Deep Learning",
+                                                                                        "Topic modelling",
+                                                                                        "Regression/Classification trees/Forests",
+                                                                                        "Gradient descent/Boosting",
+                                                                                        "GLM/GAM/Penalised models",
+                                                                                        "NLP/Tokenisation",
+                                                                                        "Text mining/API",
+                                                                                        "Variable selection in high dimensions"))
+scores <- predict(model, newdata = traindata, type = "sum_b")
+scores <- predict(model, newdata = traindata, type = "sub_w")
+scores <- predict(model, newdata = traindata, type = "mix")
+head(scores)
