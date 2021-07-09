@@ -272,3 +272,41 @@ scores <- predict(model, newdata = traindata, type = "sum_b")
 scores <- predict(model, newdata = traindata, type = "sub_w")
 scores <- predict(model, newdata = traindata, type = "mix")
 head(scores)
+
+
+##########
+library(udpipe)
+dl <- udpipe_download_model(language = "english")
+udmodel <- udpipe_load_model(file = dl$file_model)
+txt <- test$comments
+x <- udpipe_annotate(udmodel, x = txt)
+x <- as.data.frame(x)
+anno <- udpipe(x, "english", trace=10)
+########
+#################################EXAMPLE########################################
+library(ctv)
+pkgs <- available.views()
+names(pkgs) <- sapply(pkgs, FUN = function(x) x$name)
+pkgs <- c(pkgs$NaturalLanguageProcessing$packagelist$name,pkgs$MachineLearning$packagelist$name)
+library(tools)
+x <- CRAN_package_db()
+x <- x[,c("Package","Title","Description")]
+x$doc_id <- x$Package
+x$text <- tolower(paste(x$Title,x$Description,sep="\n"))
+x$text <- gsub("'","", x$text)
+x$text <- gsub("<.+>","",x$text)
+x <- subset(x, Package %in% pkgs)
+library(data.table)
+library(udpipe)
+library(stopwords)
+anno <- udpipe(x, "english", trace=10)
+biterms <- as.data.table(anno)
+biterms <- biterms[,cooccurrence(x=lemma, relevant=upos %in% c("NOUN","ADJ","VERB") & nchar(lemma)>2 & !lemma %in% stopwords("en"),skipgram=3),by = list(doc_id)]
+library(BTM)
+set.seed(123456)
+traindata <- subset(anno, upos %in% c("NOUN","ADJ","VERB") & !lemma %in% stopwords("en") & nchar(lemma)>2)
+traindata <- traindata[, c("doc_id","lemma")]
+model <- BTM(traindata, biterms = biterms, k = 9, iter=2000, background = TRUE, trace=100)
+library(textplot)
+library(ggraph)
+plot(model, top_n = 10, title = "BTM Model", subtitle = "R packages for NLP/ML")
